@@ -596,11 +596,14 @@ extension AetherEngine {
     nonisolated static func effectiveVideoFormat(
         detected: VideoFormat,
         stream: UnsafeMutablePointer<AVStream>,
-        capabilities: DisplayCapabilities
+        capabilities: DisplayCapabilities,
+        enableHDR: Bool = true
     ) -> VideoFormat {
-        effectiveVideoFormat(detected: detected,
-                             baseTransfer: stream.pointee.codecpar.pointee.color_trc,
-                             capabilities: capabilities)
+        guard enableHDR else { return .sdr }
+        return effectiveVideoFormat(detected: detected,
+                                    baseTransfer: stream.pointee.codecpar.pointee.color_trc,
+                                    capabilities: capabilities,
+                                    enableHDR: enableHDR)
     }
 
     /// The clamp itself, off the stream so it can be exercised against a capability table the test machine
@@ -608,8 +611,10 @@ extension AetherEngine {
     nonisolated static func effectiveVideoFormat(
         detected: VideoFormat,
         baseTransfer: AVColorTransferCharacteristic,
-        capabilities: DisplayCapabilities
+        capabilities: DisplayCapabilities,
+        enableHDR: Bool = true
     ) -> VideoFormat {
+        guard enableHDR else { return .sdr }
         guard detected == .dolbyVision else { return detected }
         if capabilities.supportsDolbyVision { return .dolbyVision }
         if baseTransfer == AVCOL_TRC_ARIB_STD_B67 {
@@ -631,8 +636,10 @@ extension AetherEngine {
     nonisolated static func presentedVideoFormat(
         effectiveFormat: VideoFormat,
         panelPresentsHDR: Bool,
-        sourceVideoFormat: VideoFormat
+        sourceVideoFormat: VideoFormat,
+        enableHDR: Bool = true
     ) -> VideoFormat {
+        guard enableHDR else { return .sdr }
         guard effectiveFormat != .sdr, panelPresentsHDR else { return .sdr }
         if effectiveFormat == .hdr10, sourceVideoFormat == .hdr10Plus { return .hdr10Plus }
         return effectiveFormat

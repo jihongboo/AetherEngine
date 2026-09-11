@@ -364,6 +364,10 @@ public struct LoadOptions: Sendable, Equatable {
     /// Mirror of `AVDisplayManager.isDisplayCriteriaMatchingEnabled`. Default `true`. When `false`, engine routes HDR sources through the media playlist (auto-tonemap path) because AVKit cannot switch the panel.
     public var matchContentEnabled: Bool
 
+    /// When true (default), HDR and Dolby Vision sources are presented in high dynamic range on capable displays.
+    /// When false, HDR sources are tone-mapped and presented as standard dynamic range (SDR).
+    public var enableHDR: Bool
+
     /// Host assertion that the panel is presenting HDR right now. Default `false` (conservative SDR branch).
     /// When set, master playlist VIDEO-RANGE=PQ and SUPPLEMENTAL-CODECS=dvh1 are accepted upfront for the
     /// HDR10-to-DV upgrade.
@@ -742,6 +746,7 @@ public struct LoadOptions: Sendable, Equatable {
         keepDvh1TagWithoutDV: Bool = false,
         forceDolbyVisionOnNonDVDisplay: Bool = false,
         matchContentEnabled: Bool = true,
+        enableHDR: Bool = true,
         panelIsInHDRMode: Bool = false,
         panelPresentsDolbyVision: Bool = false,
         audioBridgeMode: AudioBridgeMode = .surroundCompat,
@@ -782,6 +787,7 @@ public struct LoadOptions: Sendable, Equatable {
         self.keepDvh1TagWithoutDV = keepDvh1TagWithoutDV
         self.forceDolbyVisionOnNonDVDisplay = forceDolbyVisionOnNonDVDisplay
         self.matchContentEnabled = matchContentEnabled
+        self.enableHDR = enableHDR
         self.panelIsInHDRMode = panelIsInHDRMode
         self.panelPresentsDolbyVision = panelPresentsDolbyVision
         self.audioBridgeMode = audioBridgeMode

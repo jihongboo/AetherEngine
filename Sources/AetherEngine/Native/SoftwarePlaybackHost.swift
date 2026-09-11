@@ -84,6 +84,9 @@ final class SoftwarePlaybackHost {
     /// #131: forwarded from the video decoder; decoded-frame A53 cc_data triplets, presentation order.
     nonisolated(unsafe) var onA53Captions: (@Sendable ([CCDataParser.CCTriplet], Double) -> Void)?
 
+    /// Whether HDR output is enabled on the display layer. Default true.
+    var enableHDR: Bool = true
+
     // MARK: - Output
 
     /// The display layer the engine attaches to the bound `AetherPlayerView`.
@@ -731,7 +734,7 @@ final class SoftwarePlaybackHost {
         if let codecpar = vStream.pointee.codecpar {
             let trc = codecpar.pointee.color_trc
             let sourceIsHDR = trc == AVCOL_TRC_SMPTE2084 || trc == AVCOL_TRC_ARIB_STD_B67
-            if sourceIsHDR {
+            if sourceIsHDR && enableHDR {
                 renderer.setHDROutput(true)
                 EngineLog.emit(
                     "[SWHost] HDR mode ON on display layer (transfer=\(trc.rawValue))",

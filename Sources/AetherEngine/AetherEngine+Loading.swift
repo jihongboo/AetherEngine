@@ -744,6 +744,7 @@ extension AetherEngine {
             keepDvh1TagWithoutDV: keepDvh1TagWithoutDV,
             forceDolbyVisionOnNonDVDisplay: forceDolbyVisionOnNonDVDisplay,
             matchContentEnabled: matchContentEnabled,
+            enableHDR: loadedOptions.enableHDR,
             panelIsInHDRMode: panelIsInHDRMode,
             audioSourceStreamIndexOverride: audioSourceStreamIndex,
             audioBridgeMode: audioBridgeMode,
@@ -1671,6 +1672,7 @@ extension AetherEngine {
             mode: loadedOptions.deinterlaceMode,
             fieldRate: loadedOptions.deinterlaceFieldRate
         )
+        host.enableHDR = loadedOptions.enableHDR
         host.onFirstHDR10PlusDetected = { [weak self] in
             Task { @MainActor in self?.handleHDR10PlusDetected() }
         }

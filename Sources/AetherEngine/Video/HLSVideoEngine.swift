@@ -61,8 +61,11 @@ public final class HLSVideoEngine: @unchecked Sendable {
     /// master-playlist routing is safe regardless of `matchContentEnabled` (AetherEngine#4).
     private let panelIsInHDRMode: Bool
 
+    /// From `LoadOptions.enableHDR`; default true. When false, HDR/DV sources are tone-mapped to SDR.
+    public let enableHDR: Bool
+
     /// `dvModeAvailable || keepDvh1TagWithoutDV`; DV routing branches key off this.
-    var effectiveDvMode: Bool { dvModeAvailable || keepDvh1TagWithoutDV }
+    var effectiveDvMode: Bool { enableHDR && (dvModeAvailable || keepDvh1TagWithoutDV) }
 
     /// Caller-chosen audio stream index; nil falls back to `av_find_best_stream`. Enables
     /// host-driven track switching via `AetherEngine.selectAudioTrack(index:)` reload.
@@ -826,6 +829,7 @@ public final class HLSVideoEngine: @unchecked Sendable {
         keepDvh1TagWithoutDV: Bool = false,
         forceDolbyVisionOnNonDVDisplay: Bool = false,
         matchContentEnabled: Bool = true,
+        enableHDR: Bool = true,
         panelIsInHDRMode: Bool = false,
         audioSourceStreamIndexOverride: Int32? = nil,
         audioBridgeMode: AudioBridgeMode = .surroundCompat,
@@ -863,12 +867,13 @@ public final class HLSVideoEngine: @unchecked Sendable {
             probesize: probesize, maxAnalyzeDuration: maxAnalyzeDuration)
             .withSequentialOrigin(sequentialOrigin, declaredDuration: declaredDurationSeconds)
             .withHeldSourceConnection(heldSourceConnection)
-        self.dvModeAvailable = dvModeAvailable
-        self.displaySupportsHDR = displaySupportsHDR
+        self.dvModeAvailable = enableHDR ? dvModeAvailable : false
+        self.displaySupportsHDR = enableHDR ? displaySupportsHDR : false
         self.keepDvh1TagWithoutDV = keepDvh1TagWithoutDV
         self.forceDolbyVisionOnNonDVDisplay = forceDolbyVisionOnNonDVDisplay
         self.matchContentEnabled = matchContentEnabled
-        self.panelIsInHDRMode = panelIsInHDRMode
+        self.enableHDR = enableHDR
+        self.panelIsInHDRMode = enableHDR ? panelIsInHDRMode : false
         self.audioSourceStreamIndexOverride = audioSourceStreamIndexOverride
         self.audioBridgeMode = audioBridgeMode
         self.isLiveSession = isLiveSession
@@ -1942,7 +1947,8 @@ public final class HLSVideoEngine: @unchecked Sendable {
             builtInPanelEngagesOnDemand: Self.builtInPanelEngagesOnDemand,
             frameRateKnown: frameRate != nil,
             videoCodecNeedsMasterSignaling: videoCodecNeedsMasterSignaling,
-            hasAudioRendition: servedAudioLanguage != nil)
+            hasAudioRendition: servedAudioLanguage != nil,
+            enableHDR: enableHDR)
         let resolvedURL: URL? = useMasterPlaylist
             ? srv.playlistURL
             : srv.mediaPlaylistURL
@@ -1951,7 +1957,7 @@ public final class HLSVideoEngine: @unchecked Sendable {
             throw HLSVideoEngineError.openFailed(reason: "server URL not ready")
         }
         self.servingMasterPlaylist = useMasterPlaylist
-        self.servedSourceIsHDR = videoRange != .sdr
+        self.servedSourceIsHDR = enableHDR && (videoRange != .sdr)
         EngineLog.emit("[HLSVideoEngine] serving on \(url.absoluteString) (dvModeAvailable=\(dvModeAvailable) effectiveDvMode=\(effectiveDvMode) panelIsHDR=\(panelIsInHDRMode) displaySupportsHDR=\(displaySupportsHDR) matchContent=\(matchContentEnabled) sourceIsHDR=\(videoRange != .sdr || effectiveDvMode) useMaster=\(useMasterPlaylist) videoRange=\(videoRange) dvVariant=\(dvVariant) audioLang=\(servedAudioLanguage ?? "none"))")
         return url
     }
@@ -2011,11 +2017,12 @@ public final class HLSVideoEngine: @unchecked Sendable {
         builtInPanelEngagesOnDemand: Bool,
         frameRateKnown: Bool,
         videoCodecNeedsMasterSignaling: Bool = false,
-        hasAudioRendition: Bool = false
+        hasAudioRendition: Bool = false,
+        enableHDR: Bool = true
     ) -> Bool {
-        let sourceIsHDR = videoRange != .sdr || effectiveDvMode
-        let panelReadyForHDR = panelIsInHDRMode
-            || (builtInPanelEngagesOnDemand && displaySupportsHDR)
+        let sourceIsHDR = enableHDR && (videoRange != .sdr || effectiveDvMode)
+        let panelReadyForHDR = enableHDR && (panelIsInHDRMode
+            || (builtInPanelEngagesOnDemand && displaySupportsHDR))
         // #130: a PQ/HLG master without FRAME-RATE is unloadable regardless of panel state.
         let masterManifestViable = (videoRange == .sdr) || frameRateKnown
         guard masterManifestViable else { return false }

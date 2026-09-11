@@ -3536,7 +3536,8 @@ public final class AetherEngine: ObservableObject {
             if videoIdx >= 0, let stream = probe.stream(at: videoIdx) {
                 detectedFormat = Self.detectVideoFormat(stream: stream)
                 effectiveFormat = Self.effectiveVideoFormat(detected: detectedFormat, stream: stream,
-                                                           capabilities: sessionDisplayCaps)
+                                                           capabilities: sessionDisplayCaps,
+                                                           enableHDR: options.enableHDR)
                 detectedRate = Self.detectFrameRate(stream: stream)
                 // DrHurt #4 (2026-05-26): use source-detected DV, not effective-format, so codecTag=dvh1
                 // asks AVDisplayManager for DV mode on every DV source. AVPlayer's HLS tone-mapper downgrades
@@ -3910,7 +3911,8 @@ public final class AetherEngine: ObservableObject {
         videoFormat = Self.presentedVideoFormat(
             effectiveFormat: effectiveFormat,
             panelPresentsHDR: panelHDRAfterHandshake,
-            sourceVideoFormat: sourceVideoFormat)
+            sourceVideoFormat: sourceVideoFormat,
+            enableHDR: options.enableHDR)
         #endif
         // #361: the handshake above is the second stretch a host cannot see, and on a real SDR->HDR
         // switch it is seconds long. Recorded on every branch, including the ones with nothing to
