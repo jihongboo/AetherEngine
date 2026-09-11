@@ -262,7 +262,7 @@ enum SessionOptionCorrection {
     /// deliberately. Update this list and, if the field names the session, `loadIdentityFields`.
     static let knownFields: [String] = [
         "omitCriteriaColorExtensions", "suppressDisplayCriteria", "httpHeaders",
-        "keepDvh1TagWithoutDV", "forceDolbyVisionOnNonDVDisplay", "matchContentEnabled",
+        "keepDvh1TagWithoutDV", "forceDolbyVisionOnNonDVDisplay", "matchContentEnabled", "enableHDR",
         "panelIsInHDRMode", "panelPresentsDolbyVision", "audioBridgeMode", "isLive", "audioOnly",
         "dvrWindowSeconds",
         "liveBlockingReload", "liveJoinProfile", "liveJoinStartsImmediately",
