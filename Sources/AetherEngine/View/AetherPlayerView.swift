@@ -108,7 +108,28 @@ public final class AetherPlayerView: PlatformBaseView {
         #endif
         layer.frame = bounds
         hostedLayer = layer
+        setHDROutput(true)
         CATransaction.commit()
+    }
+
+    /// Update layer EDR/HDR output dynamically
+    func setHDROutput(_ isHDR: Bool) {
+        #if canImport(AppKit) || canImport(UIKit)
+        let layers: [CALayer] = [hostedLayer, self.layer].compactMap { $0 }
+        if #available(tvOS 26.0, iOS 26.0, macOS 26.0, visionOS 26.0, *) {
+            for layer in layers {
+                layer.preferredDynamicRange = isHDR ? .high : .standard
+            }
+        } else {
+            #if os(iOS) || os(macOS)
+            if #available(iOS 17.0, macOS 14.0, *) {
+                for layer in layers {
+                    layer.wantsExtendedDynamicRangeContent = isHDR
+                }
+            }
+            #endif
+        }
+        #endif
     }
 
     /// Engine-internal. Remove the current hosted layer without
@@ -160,6 +181,7 @@ public struct AetherPlayerSurface: UIViewRepresentable {
         // points the new engine at the reused view and re-attaches its layer; bind is
         // idempotent for the steady-state existing === view case, so this is cheap.
         engine.bind(view: uiView)
+        uiView.setHDROutput(engine.loadedOptions.enableHDR)
     }
 
     public static func dismantleUIView(_ uiView: AetherPlayerView, coordinator: ()) {
@@ -188,6 +210,7 @@ public struct AetherPlayerSurface: NSViewRepresentable {
         // #188: rebind on update so an engine swap at the same structural position
         // takes over the reused view. Idempotent for the steady-state case.
         engine.bind(view: nsView)
+        nsView.setHDROutput(engine.loadedOptions.enableHDR)
     }
 
     public static func dismantleNSView(_ nsView: AetherPlayerView, coordinator: ()) {

@@ -1369,6 +1369,7 @@ public final class AetherEngine: ObservableObject {
         } else if let host = softwareHost {
             view.attach(host.displayLayer)
         }
+        view.setHDROutput(loadedOptions.enableHDR)
     }
 
     // MARK: - Display + native state
@@ -1773,7 +1774,10 @@ public final class AetherEngine: ObservableObject {
     /// custom-source branch reaches `reloadWithAudioOverride`, which reads these fields one by one.
     /// Callers go through `reloadAtCurrentPosition(applying:)`, which refuses the load-identity
     /// fields first; this setter does not re-check them.
-    func applySessionOptionCorrection(_ options: LoadOptions) { loadedOptions = options }
+    func applySessionOptionCorrection(_ options: LoadOptions) {
+        loadedOptions = options
+        boundView?.setHDROutput(options.enableHDR)
+    }
 
     #if DEBUG
     /// Test-only: install LoadOptions without a load (#88 unit tests exercise selection gating).
