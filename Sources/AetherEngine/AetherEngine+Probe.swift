@@ -586,6 +586,11 @@ extension AetherEngine {
         let transfer = codecpar.color_trc
         if transfer == AVCOL_TRC_SMPTE2084 { return .hdr10 }
         if transfer == AVCOL_TRC_ARIB_STD_B67 { return .hlg }
+        if transfer == AVCOL_TRC_BT2020_10 || transfer == AVCOL_TRC_BT2020_12 { return .hdr10 }
+        if Self.streamHasHDRMetadata(stream: stream) { return .hdr10 }
+        if transfer == AVCOL_TRC_UNSPECIFIED && codecpar.color_primaries == AVCOL_PRI_BT2020 {
+            return .hdr10
+        }
         return .sdr
     }
 
@@ -707,6 +712,22 @@ extension AetherEngine {
         }
         for i in 0..<nb {
             if sideData[i].type == AV_PKT_DATA_DOVI_CONF {
+                return true
+            }
+        }
+        return false
+    }
+
+    private nonisolated static func streamHasHDRMetadata(stream: UnsafeMutablePointer<AVStream>) -> Bool {
+        let nb = Int(stream.pointee.codecpar.pointee.nb_coded_side_data)
+        guard nb > 0, let sideData = stream.pointee.codecpar.pointee.coded_side_data else {
+            return false
+        }
+        for i in 0..<nb {
+            let type = sideData[i].type
+            if type == AV_PKT_DATA_MASTERING_DISPLAY_METADATA
+                || type == AV_PKT_DATA_CONTENT_LIGHT_LEVEL
+                || type == AV_PKT_DATA_DYNAMIC_HDR10_PLUS {
                 return true
             }
         }
